@@ -62,7 +62,7 @@ A tidy bin pays: the bonus for empty cells is worth more than a careless line.
 Tilomat follows the classic way these games are played – catch, stack, drop, line up – with rules made
 for the small screen and four shades of gray:
 
-- The kinds of tile differ by pattern (white, black with a frame, gray, checkered, striped, diamond, the
+- The kinds of tile differ by pattern (white, black with a frame, dark gray, checkered, striped, diamond, the
   star of the joker), not by color, and there are at most six of them.
 - A tile is 16 × 8 pixels: flat on the belt, where it moves in half rows, stacked in the bin, where it
   falls row by row. On the cart the tiles lie on top of each other like cards.

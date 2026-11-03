@@ -171,7 +171,7 @@ void render_init(void)
     set_sprite_data(0, GFX_TILES, gfx_tiles);
     BGP_REG = 0xe4;
     OBP0_REG = 0xd0;        /* 1 white, 2 light gray, 3 black */
-    OBP1_REG = 0xe0;        /* 1 white, 2 dark gray, 3 black */
+    OBP1_REG = 0xe4;        /* 1 light gray, 2 dark gray, 3 black */
     WX_REG = 7;
     WY_REG = 144;
     SCX_REG = 0;

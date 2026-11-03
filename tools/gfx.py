@@ -132,8 +132,8 @@ def kind_pixels(k):
                 ch = '-' if iy == 5 or ix == 13 else '.'
             elif k == 2:    # black with a white inner frame
                 ch = '.' if ix in (0, 13) or iy in (0, 5) else '#'
-            elif k == 3:    # light gray, lit at the top
-                ch = '.' if iy == 0 else '-'
+            elif k == 3:    # dark gray with a light gray inner frame
+                ch = '-' if ix in (0, 13) or iy in (0, 5) else '+'
             elif k == 4:    # checkered
                 ch = '#' if (ix // 2 + iy // 2) % 2 else '.'
             elif k == 5:    # diagonal stripes
@@ -256,7 +256,7 @@ for ch in 'TILOMA':
         add('T_BIG_' + ch if k == 0 else None, q[k])
 
 # ---------------------------------------------------------------- sprites (color 0 is transparent)
-# palette OBP0: 1 white, 2 light gray, 3 black; OBP1: 1 white, 2 dark gray, 3 black
+# palette OBP0: 1 white, 2 light gray, 3 black; OBP1: 1 light gray, 2 dark gray, 3 black
 
 SPR = {' ': ' ', 'w': '-', 'l': '+', 'k': '#'}
 
@@ -265,9 +265,10 @@ def spr(rows):
     return pic([''.join(SPR[c] for c in r) for r in rows])
 
 
-def to_sprite(rows16):
-    """A picture with shades to sprite colors: white 1, light or dark gray 2, black 3."""
-    m = {'.': 'w', '-': 'l', '+': 'l', '#': 'k', ' ': ' '}
+def to_sprite(rows16, dark=False):
+    """A picture with shades to sprite colors: for OBP0 white 1, light gray 2, black 3; for OBP1
+    (dark) white or light gray 1, dark gray 2, black 3."""
+    m = {'.': 'w', '-': 'w' if dark else 'l', '+': 'l', '#': 'k', ' ': ' '}
     return [''.join(m[c] for c in r) for r in rows16]
 
 
@@ -275,9 +276,10 @@ def to_sprite(rows16):
 dark = 0
 for k in range(1, KINDS + 1):
     p = kind_pixels(k)
-    if any('+' in r for r in p):
+    d = any('+' in r for r in p)
+    if d:
         dark |= 1 << k
-    s = to_sprite(p)
+    s = to_sprite(p, d)
     add('S_KIND' if k == 1 else None, spr([r[:8] for r in s]))
     add(None, spr([r[8:] for r in s]))
 defines.append(('KIND_DARK', dark))
