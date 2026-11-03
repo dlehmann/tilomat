@@ -27,6 +27,7 @@
 #define ROW_MACH  0
 #define ROW_BELT  1         /* slot SLOTS - 1; slot 0 is in row ROW_BELT + SLOTS - 1 */
 #define ROW_CART  10
+#define CART_FLOOR 2        /* the first row of the cart's floor in its sprite */
 #define ROW_RIM   11
 #define ROW_FLOOR 17
 #define COL_RAIL_R 11
@@ -597,7 +598,7 @@ static void draw_belt(void)
         belt_cell_want[drawn[dl_i]] = T_BELT_L;
     now_n = 0;
     dl_b = &g.belt[0][0];
-    for (dl_lane = 0, dl_c = SLOTS - 1; dl_lane < LANES; dl_lane++, dl_c += 2 * SLOTS - 1)
+    for (dl_lane = 0, dl_c = SLOTS - 1; dl_lane < LANES; dl_lane++, dl_c += 2 * SLOTS)
         /* slot s is in row SLOTS - 1 - s: cell dl_c walks up the rows */
         for (dl_s = SLOTS; dl_s; dl_s--, dl_c--) {
             dl_k = *dl_b++ & 0x0f;
@@ -789,18 +790,19 @@ static void sprites(void)
     if (g.phase == PHASE_PLAY || g.phase == PHASE_DONE) {
         /* the cart and its tiles */
         x = 8 + g.cart * 16;
-        t = g.stack_n == CART_MAX ? S_CART_FULL : S_CART;
-        spr(x, ROW_CART * 8, t, 0);
-        spr(x + 8, ROW_CART * 8, t + 1, 0);
         /* overlapping like cards: the top tile whole, of each one below the lower half; the
-           top tile first, as the sprite drawn first wins where they overlap */
+           bottom one stands on the floor of the cart, between its posts. The top tile first,
+           then the cart: the sprite drawn first wins where they overlap */
         for (i = g.stack_n; i--; ) {
             k = KIND(g.stack[i]);
             prop = kind_prop(k);
-            y = ROW_CART * 8 - 8 - 4 * i;
+            y = ROW_CART * 8 + CART_FLOOR - 8 - 4 * i;
             spr(x, y, S_KIND + 2 * (k - 1), prop);
             spr(x + 8, y, S_KIND + 2 * (k - 1) + 1, prop);
         }
+        t = g.stack_n == CART_MAX ? S_CART_FULL : S_CART;
+        spr(x, ROW_CART * 8, t, 0);
+        spr(x + 8, ROW_CART * 8, t + 1, 0);
     }
     /* broken tiles: fall past the cart, then the shards fly */
     for (i = 0, c = crashes; i < CRASHES; i++, c++) {

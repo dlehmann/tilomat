@@ -319,6 +319,35 @@ static void spawn(void)
     emit(EV_SPAWN, lane, 0, KIND(g.belt[lane][SLOTS - 1]));
 }
 
+static void catch_tile(uint8_t t)
+{
+    if (!(t & COUNTED)) {
+        t |= COUNTED;
+        if (g.goal == GOAL_TILES)
+            g.count++;
+    }
+    g.stack[g.stack_n++] = t;
+    add_points(POINTS_CATCH);
+    emit(EV_CATCH, g.cart, 0, KIND(t));
+}
+
+/* how far a tile in slot s is from the near end, in half slots (-1 in slot 0 at the half) */
+#define HEIGHT(s) ((int8_t)(2 * (s) - g.half))
+
+/* the cart catches a tile as soon as it touches the top of the stack (or the empty cart):
+   the stack grows by half a slot with every tile */
+static void catch_tiles(void)
+{
+    uint8_t *lane = g.belt[g.cart], s;
+
+    for (s = 0; s < SLOTS && g.stack_n < CART_MAX && HEIGHT(s) <= (int8_t)g.stack_n; s++)
+        if (lane[s]) {
+            catch_tile(lane[s]);
+            lane[s] = 0;
+            g.belt_dirty = 1;
+        }
+}
+
 /* the belt moves on by a slot: the tiles at the near end go onto the cart or break */
 static void belt_step(void)
 {
@@ -328,18 +357,10 @@ static void belt_step(void)
         t = g.belt[lane][0];
         if (!t)
             continue;
-        if (lane == g.cart && g.stack_n < CART_MAX) {
-            if (!(t & COUNTED)) {
-                t |= COUNTED;
-                if (g.goal == GOAL_TILES)
-                    g.count++;
-            }
-            g.stack[g.stack_n++] = t;
-            add_points(POINTS_CATCH);
-            emit(EV_CATCH, lane, 0, KIND(t));
-        } else {
+        if (lane == g.cart && g.stack_n < CART_MAX)
+            catch_tile(t);      /* passed the stack within one tick, when the belt runs fast */
+        else
             broken(lane, KIND(t));
-        }
     }
     for (lane = 0; lane < LANES; lane++) {
         for (s = 0; s < SLOTS - 1; s++)
@@ -379,14 +400,14 @@ static void drop_tile(void)
     emit(EV_DROP, col, row, g.bin[c]);
 }
 
-/* back onto the belt, to the nearest slot with free slots on both sides */
+/* back onto the belt, to the nearest slot with free slots on both sides, above the stack */
 static void toss_tile(void)
 {
     uint8_t *lane = g.belt[g.cart], z;
 
     if (g.stack_n)
         for (z = TOSS_SLOT; z < SLOTS - 1; z++)
-            if (!lane[z - 1] && !lane[z] && !lane[z + 1]) {
+            if (!lane[z - 1] && !lane[z] && !lane[z + 1] && HEIGHT(z) >= (int8_t)g.stack_n) {
                 lane[z] = g.stack[--g.stack_n];
                 g.belt_dirty = 1;
                 emit(EV_TOSS, g.cart, z, KIND(lane[z]));
@@ -543,6 +564,7 @@ static void tick_play(const Input *in)
         g.half = half;
         g.belt_dirty = 1;
     }
+    catch_tiles();
     if (!g.clearing && !g.need_sweep && settled && goal_reached())
         finish_shift();
 }

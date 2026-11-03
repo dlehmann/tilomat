@@ -138,6 +138,40 @@ static void test_cart(void)
     CHECK(g.stack_n == 0 && g.bin[CELL(0, 0)] == 1 && g.fall[CELL(0, 0)] > 0);
 }
 
+/* the cart catches a tile as soon as it touches the top of the stack */
+static void test_catch(void)
+{
+    Input none = {0, 0, 0, 0};
+    uint8_t *lane;
+
+    game_new(7);
+    to_play();
+    memset(g.belt, 0, sizeof(g.belt));
+    lane = g.belt[g.cart];
+    g.stack[0] = 1;
+    g.stack[1] = 2;
+    g.stack_n = 2;
+    lane[2] = 3;                        /* half way to slot 1: still above the stack */
+    g.step_pos = g.step_ticks / 2;
+    tick(&none);
+    CHECK(g.half && g.stack_n == 2 && lane[2] == 3);
+    lane[1] = lane[2];                  /* in slot 1 it touches the stack */
+    lane[2] = 0;
+    g.step_pos = 0;
+    tick(&none);
+    CHECK(g.stack_n == 3 && !lane[1] && KIND(g.stack[2]) == 3 && find(EV_CATCH));
+    g.stack_n = 0;                      /* the empty cart: in slot 0 */
+    lane[1] = 4;
+    g.step_pos = g.step_ticks / 2;
+    tick(&none);
+    CHECK(g.stack_n == 0 && lane[1] == 4);
+    lane[0] = lane[1];
+    lane[1] = 0;
+    g.step_pos = 0;
+    tick(&none);
+    CHECK(g.stack_n == 1 && !lane[0]);
+}
+
 /* a simple player: waits under the nearest tile, drops onto a column where it fits best */
 static int score_col(int col, int kind)
 {
@@ -228,6 +262,7 @@ int main(void)
     test_lines();
     test_cascade();
     test_cart();
+    test_catch();
     test_games();
     if (failed) {
         printf("%d checks failed\n", failed);

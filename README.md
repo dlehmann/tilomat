@@ -65,8 +65,9 @@ for the small screen and four shades of gray:
 - The kinds of tile differ by pattern (white, black with a frame, gray, checkered, striped, diamond, the
   star of the joker), not by color, and there are at most six of them.
 - A tile is 16 × 8 pixels: flat on the belt, where it moves in half rows, stacked in the bin, where it
-  falls row by row. The cart shows the tiles it holds as a little stack.
-- The cart holds four tiles. Tossed tiles land on the nearest free slot with free slots on both sides, and
+  falls row by row. On the cart the tiles lie on top of each other like cards.
+- The cart holds four tiles and catches a tile as soon as it touches the top of the stack: the fuller the
+  cart, the sooner. Tossed tiles land on the nearest free slot with free slots on both sides, and
   new tiles never come out right behind another one, so tiles on the belt never touch.
 - Instead of a fixed table of levels the shifts follow a formula and go on without end, for the high score.
 - The break meter is not refilled every few levels: every finished shift replaces one broken tile.
