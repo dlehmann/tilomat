@@ -85,9 +85,16 @@ def column_score(binv, col, kind):
     return s - 2 * h
 
 
+# the column the cart is going to for a drop; kept until the drop, so the cart does not turn
+# back and forth between the nearest tile and the column
+target = None
+
+
 def decide():
     """The button to press now, or None."""
+    global target
     if field('phase') != 1:
+        target = None
         return 'a' if field('timer') % 60 == 59 else None
     if rng.randrange(1000) < MISTAKES:
         return rng.choice([None, None, 'left', 'right', 'a'])
@@ -99,7 +106,9 @@ def decide():
         for s in range(SLOTS):
             if belt[lane * SLOTS + s] and s < nearest:
                 nearest, lane_n = s, lane
-    if stack_n and (stack_n == CART_MAX or nearest > 3 or lane_n == cart and nearest > 1):
+    if not stack_n or (nearest <= 1 and lane_n != cart and stack_n < CART_MAX):
+        target = None
+    elif target is None and (stack_n == CART_MAX or nearest > 3 or lane_n == cart and nearest > 1):
         kind = field('stack')[stack_n - 1] & 15
         binv = field('bin')
         best, bv = cart, -1000
@@ -109,8 +118,11 @@ def decide():
                 best, bv = c, v
         if bv <= -90:
             return 'b'
-        if best != cart:
-            return 'left' if best < cart else 'right'
+        target = best
+    if target is not None:
+        if target != cart:
+            return 'left' if target < cart else 'right'
+        target = None
         return 'a'
     if lane_n is not None and lane_n != cart:
         return 'left' if lane_n < cart else 'right'

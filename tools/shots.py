@@ -29,8 +29,8 @@ PAL = {(255, 255, 255): (0xf2, 0xed, 0xe1), (153, 153, 153): (0xb9, 0xb2, 0xa2),
        (85, 85, 85): (0x6b, 0x65, 0x58), (0, 0, 0): (0x23, 0x21, 0x1d)}
 
 # the good player: name -> frame
-GOOD = {'help': 20, 'play': 2550, 'done': 2750, 'intro': 20250, 'play2': 21600, 'play3': 34500}
-GIF = (21300, 21900)
+GOOD = {'help': 20, 'play': 2400, 'done': 3300, 'intro': 48300, 'play2': 49800, 'play3': 63300}
+GIF = (49200, 49800)
 # the sloppy player (700 of 1000 decisions wrong)
 BAD = {'gameover': 2300}
 # the strip for the README
