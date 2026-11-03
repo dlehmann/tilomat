@@ -5,9 +5,10 @@ the warm grays of the web page, at twice the size.
 
 It plays the ROM in PyBoy: the title screens by a script of button presses, the game by
 tools/autoplay.py (a good player, and a sloppy one for the game over, the name entry and the
-high score list). Both are deterministic, so the frames below always show the same.
+high score list). Both are deterministic, so the frames below always show the same. The game
+runs in English; only title.png shows the German title screen.
 
-Output: docs/img/*.png, docs/img/gameplay.gif
+Output: docs/img/*.png (screenshots.png: the strip for the README), docs/img/gameplay.gif
 
 Usage: tools/shots.py <rom>
 """
@@ -32,6 +33,9 @@ GOOD = {'help': 20, 'play': 2600, 'done': 3330, 'intro': 16380, 'play2': 17900, 
 GIF = (17300, 17900)
 # the sloppy player (700 of 1000 decisions wrong)
 BAD = {'gameover': 2300}
+# the strip for the README
+STRIP = ('title-en', 'help', 'play2', 'done')
+GAP = 12
 TAIL = 'wait:30,shot:entry,press:up,wait:4,press:up,wait:30,press:start,wait:60,shot:title-record,wait:400,shot:scores'
 
 
@@ -62,7 +66,7 @@ def titles():
 
 def autoplay(frames, mistakes, shots, gif=None, tail=None):
     with tempfile.TemporaryDirectory() as tmp:
-        env = dict(os.environ, EVERY='0', AT=','.join(str(f) for f in shots.values()))
+        env = dict(os.environ, ENGLISH='1', EVERY='0', AT=','.join(str(f) for f in shots.values()))
         if gif:
             env['GIF'] = '%d:%d' % gif
         if tail:
@@ -85,7 +89,18 @@ def autoplay(frames, mistakes, shots, gif=None, tail=None):
             print('gameplay.gif')
 
 
+def strip():
+    ims = [Image.open(os.path.join(OUT, name + '.png')) for name in STRIP]
+    w, h = ims[0].size
+    out = Image.new('RGB', (len(ims) * (w + GAP) - GAP, h), PAL[(255, 255, 255)])
+    for i, im in enumerate(ims):
+        out.paste(im, (i * (w + GAP), 0))
+    out.save(os.path.join(OUT, 'screenshots.png'), optimize=True)
+    print('screenshots')
+
+
 os.makedirs(OUT, exist_ok=True)
 titles()
 autoplay(max(GOOD.values()) + 1, 0, GOOD, GIF)
 autoplay(12000, 700, BAD, tail=TAIL)
+strip()

@@ -6,7 +6,8 @@ drops its tiles where they fit best, and takes screenshots now and then.
 
 Environment: EVERY (screenshot every n frames, default 600), AT (frames, comma separated),
 GIF=start:end (every frame as g<frame>.png), SAVE=1 keeps the cartridge RAM in <rom>.ram,
-TAIL=items after the game (comma separated, as in tools/run.py: wait:N, press:KEY, shot:NAME).
+TAIL=items after the game (comma separated, as in tools/run.py: wait:N, press:KEY, shot:NAME),
+ENGLISH=1 plays in English.
 
 Usage: tools/autoplay.py <rom> <out dir> [frames] [mistakes per 1000 decisions]
 """
@@ -117,6 +118,8 @@ def decide():
 
 
 pyboy.tick(120, True)
+if os.environ.get('ENGLISH'):
+    mem[sym['_lang']] = 1
 pyboy.button('start', 2)
 pyboy.tick(30, True)
 shift = 0
