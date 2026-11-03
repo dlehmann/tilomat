@@ -840,6 +840,63 @@ static void sprites(void)
     last_nspr = nspr;
 }
 
+/* ---------------------------------------------------------------- the belt of the title screen */
+
+/* the tiles ride on the belt from left to right, SIDE_GAP pixels apart; a tile that has left
+   the screen comes back at the left as the next kind */
+#define SIDE_TILES 4
+#define SIDE_GAP   48
+#define SIDE_LOOP  (SIDE_TILES * SIDE_GAP)      /* 192: the screen and a tile beyond each end */
+static uint8_t side_y, side_frame, side_next;
+static uint8_t side_pos[SIDE_TILES], side_kind[SIDE_TILES];
+
+/* the belt seen from the side in rows row + 1 and row + 2, the tiles lying on it in row */
+void title_belt_show(uint8_t row)
+{
+    uint8_t x, i;
+
+    for (x = 0; x < 20; x += 2) {
+        vset(0, x, row + 1, T_SIDE_UL);
+        vset(0, x + 1, row + 1, T_SIDE_UR);
+        vset(0, x, row + 2, T_SIDE_LL);
+        vset(0, x + 1, row + 2, T_SIDE_LR);
+    }
+    /* a pixel lower: the black frame of a tile lies on the band (and does not show on black) */
+    if (side_y != row * 8 + 1) {
+        side_y = row * 8 + 1;
+        for (i = 0; i < SIDE_TILES; i++) {
+            side_pos[i] = i * SIDE_GAP;
+            side_kind[i] = SIDE_TILES - i;
+        }
+        side_next = SIDE_TILES + 1;
+    }
+}
+
+/* moves the belt on by a pixel */
+void title_belt_step(void)
+{
+    uint8_t i, k, x;
+    const uint8_t *src;
+
+    if (++side_frame == SIDE_FRAMES)
+        side_frame = 0;
+    src = side_frames + (side_frame << 6);
+    for (i = 0; i < 4; i++, src += 16)
+        anim(T_SIDE_UL + i, src);
+    nspr = 0;
+    for (i = 0; i < SIDE_TILES; i++) {
+        if (++side_pos[i] == SIDE_LOOP) {
+            side_pos[i] = 0;
+            side_kind[i] = side_next;
+            side_next = side_next == JOKER ? 1 : side_next + 1;
+        }
+        k = side_kind[i];
+        x = side_pos[i] - 16;
+        spr(x, side_y, S_KIND + 2 * (k - 1), kind_prop(k));
+        spr(x + 8, side_y, S_KIND + 2 * (k - 1) + 1, kind_prop(k));
+    }
+}
+
 void render_frame(void)
 {
     uint8_t i, f;

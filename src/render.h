@@ -15,6 +15,10 @@ void render_frame(void);
 void render_events(void);
 void render_hide_sprites(void);
 
+/* the belt of the title screen */
+void title_belt_show(uint8_t row);
+void title_belt_step(void);
+
 /* safe writes to the video RAM while the display is on */
 void vset(uint8_t win, uint8_t x, uint8_t y, uint8_t t);
 void vfill(uint8_t win, uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t t);

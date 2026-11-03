@@ -44,6 +44,8 @@ static void frame(void)
 
 /* ---------------------------------------------------------------- title screen */
 
+#define BELT_ROW 9      /* the tiles on the belt of the title screen; the belt below */
+
 static const uint8_t logo[] = {T_BIG_T, T_BIG_I, T_BIG_L, T_BIG_O, T_BIG_M, T_BIG_A, T_BIG_T};
 
 static void draw_logo(void)
@@ -56,23 +58,6 @@ static void draw_logo(void)
         vset(0, 4 + i * 2, 1, t + 1);
         vset(0, 3 + i * 2, 2, t + 2);
         vset(0, 4 + i * 2, 2, t + 3);
-    }
-}
-
-/* a strip of belt with tiles moving along it */
-static void draw_belt_strip(uint8_t row, uint8_t pos)
-{
-    uint8_t x, p, k;
-
-    for (x = 0; x < 20; x += 2) {
-        p = x / 2 + pos;
-        k = p % 3 ? 0 : 1 + (p / 3) % 7;
-        if (k)
-            put_kind(0, x, row, k);
-        else {
-            vset(0, x, row, T_BELT_L);
-            vset(0, x + 1, row, T_BELT_R);
-        }
     }
 }
 
@@ -99,8 +84,10 @@ static void title_page(uint8_t page)
 {
     vfill(0, 0, 4, 20, 13, T_SPACE);
     if (page) {
+        render_hide_sprites();
         draw_scores();
     } else {
+        title_belt_show(BELT_ROW);
         print_center(0, 5, TITLE_TAGLINE, 0);
         if (last_played)
             print_center(0, 12, last_record ? TITLE_RECORD : TITLE_SCORE, last_score);
@@ -124,8 +111,8 @@ static void title(void)
             page ^= 1;
             title_page(page);
         }
-        if (!page && t % 16 == 0)
-            draw_belt_strip(9, (uint8_t)(255 - (t / 16) % 255));
+        if (!page && !(t & 1))
+            title_belt_step();
         if ((t & 31) == 0)
             print_center(0, 15, TITLE_START, 0);
         else if ((t & 31) == 24)

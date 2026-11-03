@@ -190,6 +190,32 @@ def rail(shift):
 add('T_RAIL', rail(0))
 extra.append(('rail_frames', [rail(0), rail(4)]))
 
+# the belt of the title screen, seen from the side (16 x 16, two rows): the band on top with
+# grooves moving right, rollers turning clockwise, the band below moving left; SIDE_FRAMES
+# frames, one pixel apart (the grooves repeat every 4 pixels, a roller turns once in 24)
+ROLLER = ['  ----  ', ' -++++- ', '-++++++-', '-++..++-', '-++..++-', '-++++++-', ' -++++- ', '  ----  ']
+MARK = [((3, 1), (4, 1)), ((6, 3), (6, 4)), ((3, 6), (4, 6)), ((1, 3), (1, 4))]
+
+
+SIDE_FRAMES = 24
+
+
+def side_belt(f):
+    rows = ['-' * 16, ''.join('#' if (x - f) % 4 == 0 else '+' for x in range(16)), '+' * 16, '#' * 16]
+    roller = [list(r) for r in ROLLER]
+    for x, y in MARK[f * 4 // SIDE_FRAMES]:
+        roller[y][x] = '#'
+    rows += ['####' + ''.join(r).replace(' ', '#') + '####' for r in roller]
+    rows += ['+' * 16, ''.join('#' if (x + f) % 4 == 0 else '+' for x in range(16)), '-' * 16, '#' * 16]
+    upper, lower = rows[:8], rows[8:]
+    return [*halves(upper), *halves(lower)]
+
+
+for n, t in zip(('T_SIDE_UL', 'T_SIDE_UR', 'T_SIDE_LL', 'T_SIDE_LR'), side_belt(0)):
+    add(n, t)
+extra.append(('side_frames', [t for f in range(SIDE_FRAMES) for t in side_belt(f)]))
+defines.append(('SIDE_FRAMES', SIDE_FRAMES))
+
 # the machine above the belt: housing and a nozzle with a lamp for each lane
 add('T_MACH', pic(['########', '#-------', '#-+++++-', '#-+###+-', '#-+++++-', '#-------', '########',
                    '+#+#+#+#']))
