@@ -271,7 +271,7 @@ def to_sprite(rows16):
     return [''.join(m[c] for c in r) for r in rows16]
 
 
-# the tiles as sprites (falling off the belt) and as slabs on the cart (4 pixels high)
+# the tiles as sprites (on the cart and falling off the belt)
 dark = 0
 for k in range(1, KINDS + 1):
     p = kind_pixels(k)
@@ -280,11 +280,6 @@ for k in range(1, KINDS + 1):
     s = to_sprite(p)
     add('S_KIND' if k == 1 else None, spr([r[:8] for r in s]))
     add(None, spr([r[8:] for r in s]))
-for k in range(1, KINDS + 1):
-    s = to_sprite(kind_pixels(k))
-    slab = [s[0], s[2], s[4], s[7]] + [' ' * 16] * 4
-    add('S_SLAB' if k == 1 else None, spr([r[:8] for r in slab]))
-    add(None, spr([r[8:] for r in slab]))
 defines.append(('KIND_DARK', dark))
 
 CART = ['k              k',

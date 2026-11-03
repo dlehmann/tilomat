@@ -792,12 +792,14 @@ static void sprites(void)
         t = g.stack_n == CART_MAX ? S_CART_FULL : S_CART;
         spr(x, ROW_CART * 8, t, 0);
         spr(x + 8, ROW_CART * 8, t + 1, 0);
-        for (i = 0; i < g.stack_n; i++) {
+        /* overlapping like cards: the top tile whole, of each one below the lower half; the
+           top tile first, as the sprite drawn first wins where they overlap */
+        for (i = g.stack_n; i--; ) {
             k = KIND(g.stack[i]);
             prop = kind_prop(k);
-            y = ROW_CART * 8 - 4 - 4 * i;
-            spr(x, y, S_SLAB + 2 * (k - 1), prop);
-            spr(x + 8, y, S_SLAB + 2 * (k - 1) + 1, prop);
+            y = ROW_CART * 8 - 8 - 4 * i;
+            spr(x, y, S_KIND + 2 * (k - 1), prop);
+            spr(x + 8, y, S_KIND + 2 * (k - 1) + 1, prop);
         }
     }
     /* broken tiles: fall past the cart, then the shards fly */
