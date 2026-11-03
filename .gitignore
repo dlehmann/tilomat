@@ -4,5 +4,6 @@ tools/gbdk/
 tools/venv
 *.sav
 *.ram
+*.state
 __pycache__/
 .claude/
