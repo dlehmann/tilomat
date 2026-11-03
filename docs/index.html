@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tilomat – the tile machine for the Game Boy</title>
+    <meta name="description" content="Tilomat is a tile-catching puzzle game for the original Game Boy. Catch the tiles from the belt, drop them into the bin, line up three of a kind. Play it in the browser or download the ROM.">
+    <meta name="theme-color" content="#e3570f">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="style.css">
+    <meta property="og:title" content="Tilomat – the tile machine for the Game Boy">
+    <meta property="og:description" content="A tile-catching puzzle game for the original Game Boy. Play it in the browser.">
+    <meta property="og:image" content="img/play2.png">
+</head>
+<body>
+<div class="hazard" aria-hidden="true"></div>
+
+<header class="wrap bar">
+    <a class="mark" href="#top" aria-label="Tilomat"><img src="img/tile4.png" alt="">TILOMAT</a>
+    <nav aria-label="Sections">
+        <a href="#play">Play</a>
+        <a href="#how">How it works</a>
+        <a href="#screens">Screens</a>
+        <a href="#get">Get it</a>
+    </nav>
+</header>
+
+<main id="top">
+    <div class="wrap hero">
+        <div>
+            <p class="eyebrow">GAME BOY · DMG · 32 KB</p>
+            <h1>TILOMAT</h1>
+            <p class="lead">The tile machine. Tiles come rattling down the belt – catch them with your cart, drop
+                them into the bin and line up three of a kind before the stack runs over. A puzzle game for the
+                original Game Boy, playable right here in your browser.</p>
+            <div class="actions">
+                <a class="btn primary" href="#play">▶ Play now</a>
+                <a class="btn" href="tilomat.gb" download>Download ROM</a>
+            </div>
+        </div>
+        <div class="belt" aria-hidden="true">
+            <img src="img/tile1.png" alt="" style="left:6px;animation-duration:6s;animation-delay:-1s">
+            <img src="img/tile4.png" alt="" style="left:calc(20% + 6px);animation-duration:6s;animation-delay:-4s">
+            <img src="img/tile2.png" alt="" style="left:calc(40% + 6px);animation-duration:6s;animation-delay:-2.5s">
+            <img src="img/tile5.png" alt="" style="left:calc(60% + 6px);animation-duration:6s;animation-delay:-5.2s">
+            <img src="img/tile3.png" alt="" style="left:calc(80% + 6px);animation-duration:6s;animation-delay:-0.3s">
+            <img src="img/tile6.png" alt="" style="left:calc(20% + 6px);animation-duration:6s;animation-delay:-1.1s">
+            <img src="img/tile7.png" alt="" style="left:calc(60% + 6px);animation-duration:6s;animation-delay:-2.4s">
+            <img src="img/tile1.png" alt="" style="left:calc(80% + 6px);animation-duration:6s;animation-delay:-3.4s">
+        </div>
+    </div>
+
+    <div class="hazard" aria-hidden="true"></div>
+
+    <section class="play" id="play">
+        <div class="wrap play-grid">
+            <div class="cabinet" id="cabinet" tabindex="0" aria-label="Game Boy emulator running Tilomat">
+                <i class="screw tl"></i><i class="screw tr"></i><i class="screw bl"></i><i class="screw br"></i>
+                <div class="plate"><span>TILOMAT · MK I</span><span class="lamp" aria-hidden="true"></span></div>
+                <div class="bezel">
+                    <canvas id="screen" width="160" height="144"></canvas>
+                    <button class="start-overlay" id="power" type="button">
+                        <span class="big">▶ SWITCH ON</span>
+                        <span>with sound</span>
+                    </button>
+                </div>
+                <div class="deck">
+                    <div class="pad" id="pad" data-dir="" aria-label="Direction pad">
+                        <span class="u"></span><span class="d"></span><span class="l"></span><span class="r"></span>
+                    </div>
+                    <div class="ab">
+                        <button class="round b" type="button" data-btn="b" aria-label="B">B</button>
+                        <button class="round a" type="button" data-btn="a" aria-label="A">A</button>
+                    </div>
+                </div>
+                <div class="small-row">
+                    <button class="small" type="button" data-btn="select">SELECT</button>
+                    <button class="small" type="button" data-btn="start">START</button>
+                    <button class="small" type="button" id="mute" aria-pressed="false">SOUND</button>
+                </div>
+            </div>
+            <div>
+                <div class="section-head"><span class="no">01</span><h2>Play</h2></div>
+                <p>Switch the machine on and press START. The game speaks German at first – press SELECT on the
+                    title screen for English.</p>
+                <ul class="keys">
+                    <li><span><kbd>←</kbd> <kbd>→</kbd></span><span>move the cart</span></li>
+                    <li><span><kbd>X</kbd> / <kbd>K</kbd></span><span>A – drop the top tile into the bin</span></li>
+                    <li><span><kbd>Z</kbd> / <kbd>↑</kbd></span><span>B – toss the tile back onto the belt</span></li>
+                    <li><span><kbd>↓</kbd> held</span><span>run the belt faster</span></li>
+                    <li><span><kbd>Enter</kbd></span><span>START – start, pause</span></li>
+                    <li><span><kbd>Shift</kbd></span><span>SELECT – language on the title, quit in the pause</span></li>
+                </ul>
+                <p class="note">On a phone, use the buttons on the machine. Your high scores stay in this browser
+                    only.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="how">
+        <div class="wrap">
+            <div class="section-head"><span class="no">02</span><h2>How it works</h2></div>
+            <div class="steps">
+                <div class="step">
+                    <div class="tiles"><img src="img/tile5.png" alt="A striped tile"></div>
+                    <h3>Catch</h3>
+                    <p>Tiles come out of the machine and slide down five lanes. Park the cart under a lane before
+                        the tile reaches the end – a tile that falls off the belt breaks.</p>
+                </div>
+                <div class="step">
+                    <div class="tiles stack"><img src="img/tile1.png" alt=""><img src="img/tile4.png" alt=""><img src="img/tile2.png" alt="A stack of tiles"></div>
+                    <h3>Stack</h3>
+                    <p>The cart holds four tiles. Drop the top one into the bin below, or toss it back up the
+                        belt to buy time.</p>
+                </div>
+                <div class="step">
+                    <div class="tiles"><img src="img/tile3.png" alt=""><img src="img/tile3.png" alt=""><img src="img/tile3.png" alt="Three tiles in a row"></div>
+                    <h3>Line up</h3>
+                    <p>Three or more of a kind in a line – across, up or diagonal – vanish. Tiles above fall
+                        down and may line up again: each round of a cascade multiplies the points.</p>
+                </div>
+            </div>
+
+            <ul class="kinds" aria-label="The kinds of tile">
+                <li><img src="img/tile1.png" alt="">WHITE</li>
+                <li><img src="img/tile2.png" alt="">FRAME</li>
+                <li><img src="img/tile3.png" alt="">GRAY</li>
+                <li><img src="img/tile4.png" alt="">CHECKS</li>
+                <li><img src="img/tile5.png" alt="">STRIPES</li>
+                <li><img src="img/tile6.png" alt="">DIAMOND</li>
+                <li><img src="img/tile7.png" alt="">JOKER</li>
+            </ul>
+
+            <div class="section-head" style="margin-top:64px"><span class="no">03</span><h2>Shifts &amp; orders</h2></div>
+            <p class="muted">The game runs in shifts. Every shift comes with a work order and ends as soon as
+                it is filled. The orders grow a little every five shifts, the belt gets faster with every one,
+                and new kinds of tile join in – from shift 8 also the joker, a star that fits every kind.</p>
+            <div class="tickets" style="margin-top:28px">
+                <div class="ticket" data-no="ORDER 1"><b>LINES</b><p>Make a number of lines, any kind, any direction.</p></div>
+                <div class="ticket" data-no="ORDER 2"><b>TILES</b><p>Catch a number of tiles from the belt.</p></div>
+                <div class="ticket" data-no="ORDER 3"><b>ONE KIND</b><p>Lines of the kind shown on the order.</p></div>
+                <div class="ticket" data-no="ORDER 4"><b>POINTS</b><p>Score so many points within the shift.</p></div>
+                <div class="ticket" data-no="ORDER 5"><b>LONG LINES</b><p>Lines of four or five tiles.</p></div>
+            </div>
+
+            <div class="rules">
+                <div>
+                    <h3>Points</h3>
+                    <table>
+                        <tr><th>WHAT</th><th>POINTS</th></tr>
+                        <tr><td>a caught tile</td><td class="num">10</td></tr>
+                        <tr><td>a line of 3 / 4 / 5</td><td class="num">100 / 400 / 1000</td></tr>
+                        <tr><td>across · diagonal</td><td class="num">× 2 · × 3</td></tr>
+                        <tr><td>each round of a cascade</td><td class="num">× 2, × 3, …</td></tr>
+                        <tr><td>every empty cell at the end of a shift</td><td class="num">50</td></tr>
+                        <tr><td>the shift itself</td><td class="num">250 × shift</td></tr>
+                    </table>
+                </div>
+                <div>
+                    <h3>Breaks</h3>
+                    <p>Every tile that falls off the belt goes into the break meter. The fourth break ends the
+                        game – but every finished shift replaces one broken tile.</p>
+                    <h3 style="margin-top:26px">Tip</h3>
+                    <p>A tidy bin pays: the bonus for empty cells at the end of a shift is often worth more than a
+                        hasty line. And don't forget the cart can throw tiles back.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="hazard" aria-hidden="true"></div>
+
+    <section id="screens">
+        <div class="wrap">
+            <div class="section-head"><span class="no">04</span><h2>Screens</h2></div>
+            <div class="shots">
+                <figure class="wide"><img src="img/gameplay.gif" alt="Animation: tiles sliding down the belt, the cart catching them" width="320" height="288"><figcaption>SHIFT 6, LIVE</figcaption></figure>
+                <figure><img src="img/title-en.png" alt="Title screen" width="320" height="288"><figcaption>TITLE</figcaption></figure>
+                <figure><img src="img/help.png" alt="The first shift explains the controls" width="320" height="288"><figcaption>FIRST SHIFT</figcaption></figure>
+                <figure><img src="img/play3.png" alt="A shift later in the game with jokers" width="320" height="288"><figcaption>SHIFT 10</figcaption></figure>
+                <figure><img src="img/done.png" alt="Shift done, bonus" width="320" height="288"><figcaption>ORDER FILLED</figcaption></figure>
+                <figure><img src="img/intro.png" alt="A new kind of tile comes in" width="320" height="288"><figcaption>NEW TILE</figcaption></figure>
+                <figure><img src="img/gameover.png" alt="Game over" width="320" height="288"><figcaption>END OF WORK</figcaption></figure>
+            </div>
+        </div>
+    </section>
+
+    <section id="get" class="play">
+        <div class="wrap">
+            <div class="section-head"><span class="no">05</span><h2>Get it</h2></div>
+            <div class="get">
+                <div class="card hot">
+                    <h3>The ROM</h3>
+                    <p><a href="tilomat.gb" download>tilomat.gb</a> – 32 KB, MBC1 with 8 KB battery-backed RAM
+                        for the top ten. Runs on the original Game Boy from a flash cartridge, and in any good
+                        emulator (SameBoy, Gambatte, mGBA, BGB).</p>
+                </div>
+                <div class="card">
+                    <h3>The source</h3>
+                    <p>C for GBDK-2020, graphics, texts and music generated by Python scripts, tests that play the
+                        game by themselves. All on <a href="https://github.com/dlehmann/tilomat">GitHub</a>.</p>
+                </div>
+                <div class="card">
+                    <h3>Build it</h3>
+                    <p>With GBDK-2020 4.4 in <code>tools/gbdk</code> and Python with Pillow:</p>
+                    <pre>make</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<div class="hazard" aria-hidden="true"></div>
+<footer class="wrap">
+    <div class="foot">
+        <span>Tilomat · a Game Boy game by Dennis Lehmann</span>
+        <nav aria-label="Rechtliches">
+            <a href="impressum.html#impressum" lang="de">Impressum</a>
+            <a href="impressum.html#datenschutz" lang="de">Datenschutz</a>
+        </nav>
+    </div>
+</footer>
+
+<script src="gb.js"></script>
+<script src="play.js"></script>
+</body>
+</html>

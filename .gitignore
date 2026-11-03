@@ -1,0 +1,8 @@
+build/
+gen/
+tools/gbdk/
+tools/venv
+*.sav
+*.ram
+__pycache__/
+.claude/
