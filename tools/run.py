@@ -22,7 +22,8 @@ for item in sys.argv[2:]:
         for _ in range(int(arg)):
             pyboy.tick(1, True, True)
             if '--sound' in sys.argv[2:] or any(a.startswith('sound:') for a in sys.argv[2:]):
-                pcm.append(bytes(pyboy.sound.ndarray.tobytes()))
+                # PyBoy gives signed 8 bit samples, a WAV file of 8 bits holds them unsigned
+                pcm.append((pyboy.sound.ndarray.astype('int16') + 128).astype('uint8').tobytes())
     elif kind == 'press':
         key, _, n = arg.partition(':')
         pyboy.button(key, int(n) if n else 2)

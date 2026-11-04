@@ -1,10 +1,11 @@
 /*
  * sound.c - music and sound effects on the Game Boy's sound chip.
  *
- * The music (gen/music.c) is one event per 16th note, which takes MUS_STEP_A and MUS_STEP_B
- * ticks in turn. Channel 2 plays the chords (as a fast arpeggio) and the melody, channel 3
- * the bass, channel 4 the drums. The effects are small
- * programs for channel 1; noise in an effect borrows channel 4 from the drums.
+ * The music is ten songs (gen/songs*.c, in the ROM banks from 2 on); the one playing is copied
+ * into RAM. A song is one event per 16th note, every step_fp / 256 ticks: on each channel a
+ * note starts, ends (1) or holds (0). Channel 1 plays the melody, channel 2 a second
+ * voice below it, channel 3 the bass, channel 4 the drums. The effects are small programs for
+ * channel 1, the melody pauses while one plays; noise in an effect borrows channel 4.
  */
 #include <gb/gb.h>
 #include <gb/hardware.h>
@@ -12,10 +13,7 @@
 #include "music.h"
 
 static uint8_t playing;
-static uint8_t pos, wait, bass_gate, v2_gate, arp, arp_tick;
-/* the beat counter for the animations: steps since the start */
-uint8_t music_step;
-uint8_t beat;
+static uint16_t pos, step_acc;
 
 static const uint8_t *sfx;
 static uint8_t sfx_wait, sfx_vol, sfx_duty, sfx_noise, sfx_prio_now;
@@ -44,22 +42,6 @@ void sound_init(void)
     NR42_REG = 0;
 }
 
-static void ch2_note(uint8_t n, uint8_t env)
-{
-    uint16_t x = note_pulse[n - 24];
-    NR21_REG = 0x80;
-    NR22_REG = env;
-    NR23_REG = (uint8_t)x;
-    NR24_REG = 0x80 | (x >> 8);
-}
-
-static void ch2_freq(uint8_t n)
-{
-    uint16_t x = note_pulse[n - 24];
-    NR23_REG = (uint8_t)x;
-    NR24_REG = x >> 8;
-}
-
 static void drum(uint8_t d)
 {
     switch (d) {
@@ -86,44 +68,96 @@ static void drum(uint8_t d)
     NR44_REG = 0x80;
 }
 
+/* a note on a pulse channel, reg: its registers (NR10 or NR20, which is one before NR21) */
+#define CH1 ((volatile uint8_t *)0xff10)
+#define CH2 ((volatile uint8_t *)0xff15)
+
+static void pulse(volatile uint8_t *reg, uint8_t n, uint8_t duty, uint8_t env)
+{
+    if (n == 1) {
+        reg[2] = 0;
+        reg[4] = 0x80;
+    } else {
+        uint16_t x = note_pulse[n - 24];
+        reg[1] = duty;
+        reg[2] = env;
+        reg[3] = (uint8_t)x;
+        reg[4] = 0x80 | (x >> 8);
+    }
+}
+
+/* the song playing, copied from its ROM bank: lead, harm, bass and drum of `steps` 16ths each */
+uint8_t music_song;
+static uint8_t loaded = 0xff;
+static uint8_t song_buf[4 * SONG_MAX_STEPS];
+static uint16_t steps, step_fp;
+static uint8_t lead_duty, lead_env, harm_duty, harm_env;
+
+/* in bank 0 (and with the interrupts off), as the bank switched in replaces $4000-$7fff */
+static void copy_banked(uint8_t *dst, const uint8_t *src, uint16_t n, uint8_t bank) NONBANKED
+{
+    uint8_t save = _current_bank;
+
+    disable_interrupts();
+    SWITCH_ROM(bank);
+    while (n--)
+        *dst++ = *src++;
+    SWITCH_ROM(save);
+    enable_interrupts();
+}
+
+static void load(void)
+{
+    const SongInfo *s = &songs[music_song];
+
+    if (loaded == music_song)
+        return;
+    loaded = music_song;
+    steps = s->steps;
+    step_fp = s->step_fp;
+    lead_duty = s->lead_duty;
+    lead_env = s->lead_env;
+    harm_duty = s->harm_duty;
+    harm_env = s->harm_env;
+    copy_banked(song_buf, s->data, 4 * steps, s->bank);
+}
+
 static void music_event(void)
 {
-    uint8_t b = mus_bass[pos], v = mus_v2[pos];
+    const uint8_t *p = song_buf + pos;
+    uint8_t l = p[0], v = p[steps], b = p[2 * steps];
 
-    if (b) {
+    if (b == 1) {
+        NR32_REG = 0;
+    } else if (b) {
         uint16_t x = note_wave[b - 24];
+        /* the DAC off stops the channel: retriggering it while it plays can garble the wave RAM */
+        NR30_REG = 0;
         NR30_REG = 0x80;
-        NR32_REG = 0x40;
+        NR32_REG = 0x20;
         NR33_REG = (uint8_t)x;
         NR34_REG = 0x80 | (x >> 8);
-        bass_gate = 6;
     }
     if (!sfx_noise)
-        drum(mus_drum[pos]);
-    if (v) {
-        v2_gate = mus_v2len[pos] * 7 + (mus_v2len[pos] >> 1);
-        if (v & 0x80) {
-            arp = 1 + (v & 0x7f) * 3;
-            arp_tick = 0;
-            ch2_note(mus_chord[arp - 1], 0x72);
-        } else {
-            arp = 0;
-            ch2_note(v, 0x83);
-        }
+        drum(p[3 * steps]);
+    if (l && !sfx) {
+        NR10_REG = 0;
+        pulse(CH1, l, lead_duty, lead_env);
     }
-    music_step++;
-    beat = music_step >> 2;
-    pos++;
+    if (v)
+        pulse(CH2, v, harm_duty, harm_env);
+    if (++pos == steps)
+        pos = 0;
 }
 
 void music_start(void)
 {
     if (playing)
         return;
+    load();
     playing = 1;
     pos = 0;
-    wait = 1;
-    v2_gate = bass_gate = 0;
+    step_acc = step_fp;
 }
 
 /* continues where the music was stopped (after the pause) */
@@ -132,12 +166,24 @@ void music_resume(void)
     playing = 1;
 }
 
+/* switches to song n and plays it from the start */
+void music_select(uint8_t n)
+{
+    music_stop();
+    music_song = n;
+    music_start();
+}
+
 void music_stop(void)
 {
     playing = 0;
     NR22_REG = 0;
     NR24_REG = 0x80;
     NR32_REG = 0;
+    if (!sfx) {
+        NR12_REG = 0;
+        NR14_REG = 0x80;
+    }
     if (!sfx_noise) {
         NR42_REG = 0;
         NR44_REG = 0x80;
@@ -258,20 +304,9 @@ void sound_tick(void)
     sfx_tick();
     if (!playing)
         return;
-    if (bass_gate && !--bass_gate)
-        NR32_REG = 0;
-    if (v2_gate && !--v2_gate) {
-        NR22_REG = 0;
-        NR24_REG = 0x80;
-        arp = 0;
-    }
-    if (arp) {
-        uint8_t base = arp - 1 - (arp - 1) % 3;
-        arp_tick = arp_tick == 2 ? 0 : arp_tick + 1;
-        ch2_freq(mus_chord[base + arp_tick]);
-    }
-    if (!--wait) {
+    step_acc += 256;
+    if (step_acc >= step_fp) {
+        step_acc -= step_fp;
         music_event();
-        wait = (pos & 1) ? MUS_STEP_A : MUS_STEP_B;
     }
 }

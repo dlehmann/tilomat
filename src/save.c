@@ -1,13 +1,14 @@
 /*
  * save.c - the high score list and the settings in the battery-backed cartridge RAM
- * (MBC1, 8 KB at $A000): a magic word, the language, the last name entered and the best
- * 10 results, with a checksum. A missing or damaged list starts empty.
+ * (MBC1, 8 KB at $A000): a magic word, the language and the song chosen, the last name
+ * entered and the best 10 results, with a checksum. A missing or damaged list starts empty.
  */
 #include <gb/gb.h>
 #include <string.h>
 #include "save.h"
 #include "render.h"
 #include "gfx.h"
+#include "sound.h"
 
 #define MAGIC 0x54494c31UL     /* "TIL1" */
 
@@ -48,7 +49,9 @@ void save_load(void)
         for (i = 0; i < NAME_LEN; i++)
             buf.last_name[i] = T_SPACE;
     }
+    /* the song chosen is kept above the language bit */
     lang = buf.lang & 1;
+    music_song = (buf.lang >> 1) % SONGS;
     memcpy(last_name, buf.last_name, NAME_LEN);
     memcpy(scores, buf.scores, sizeof(scores));
 }
@@ -56,7 +59,7 @@ void save_load(void)
 void save_store(void)
 {
     buf.magic = MAGIC;
-    buf.lang = lang;
+    buf.lang = lang | music_song << 1;
     memcpy(buf.last_name, last_name, NAME_LEN);
     memcpy(buf.scores, scores, sizeof(scores));
     buf.sum = checksum(&buf);

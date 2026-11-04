@@ -3,12 +3,12 @@
 The tile machine – a tile-catching puzzle game for the original Game Boy (DMG, "Game Boy Classic"),
 for emulators and flash cartridges.
 
-![Title screen, controls, in the game, shift done](docs/img/screenshots.png)
+![Title screen, controls, in the game, music menu](docs/img/screenshots.png)
 
 **Play it in the browser:** <https://dlehmann.github.io/tilomat/>
 
-**The ROM: `tilomat.gb`** (also `build/tilomat.gb`) – 32 KB, MBC1 with 8 KB battery-backed RAM for the high
-score list.
+**The ROM: `tilomat.gb`** (also `build/tilomat.gb`) – 64 KB, MBC1 with 8 KB battery-backed RAM for the high
+score list, the language and the song chosen.
 
 ## How to play
 
@@ -27,7 +27,7 @@ one.
 | B or up       | toss the top tile back onto the belt                           |
 | down (held)   | the belt runs four times as fast                               |
 | START         | start; in the game: pause                                      |
-| SELECT        | in the pause: end the game; on the title: German/English       |
+| SELECT        | in the game: music menu; in the pause: end the game; on the title: German/English |
 | name entry    | up/down: letter, left/right or A/B: position, START: save      |
 
 ### Shifts and orders
@@ -72,8 +72,12 @@ for the small screen and four shades of gray:
 - Instead of a fixed table of levels the shifts follow a formula and go on without end, for the high score.
 - The break meter is not refilled every few levels: every finished shift replaces one broken tile.
 
-The music is a loop of 16 bars at about 138 bpm in A minor on the sound chip: chords and melody on channel 2,
-the bass on the wave channel, the drums on the noise channel; the effects have channel 1 to themselves.
+Ten songs of its own come with the game, each with its own key, tempo, chords, bass line and drums: Conveyor
+Boogie (the default), Night Shift, Turbo Beat, Puzzle Pop, Red Line, Sun Deck, Crystal, Final Sprint, Way Home
+and Tile Shuffle. SELECT in the game opens the music menu: up and down play the songs, A closes it, and the
+choice is saved. The tune plays on channel 1, a second voice (a third below, an echo, an octave or an
+arpeggio) on channel 2, the bass on the wave channel, kick, clap and hi-hats on the noise channel. The effects
+take channel 1 from the tune while they play.
 
 ## Building
 
@@ -87,19 +91,27 @@ make
 
 `make` generates the files in `gen/` from `tools/gfx.py` (all tiles: font, tile kinds, belt, bin, logo,
 sprites; a preview in `build/tiles.png`), `tools/text.py` (texts in German and English) and `tools/music.py`
-(music, effects), compiles `src/` and writes `build/tilomat.gb` and `tilomat.gb`.
+(the songs from `tools/songs.json` into the ROM banks 2 and 3, the effects), compiles `src/` and writes
+`build/tilomat.gb` and `tilomat.gb`.
+
+`tools/songs.json` holds the ten songs, written by `tools/compose.py` (`python3 tools/compose.py`): per song
+32 bars in the form A A B A, a chord progression, a bass and a drum pattern, and a tune that walks over the
+chord tones in a two bar rhythm. 2 KB per song, five to a ROM bank; the one playing is copied into the RAM.
 
 | File            | Contents                                                                    |
 |-----------------|-----------------------------------------------------------------------------|
 | `src/main.c`    | flow: title screen, game loop, pause, panels, name entry                    |
 | `src/game.c`    | the game logic: belt, cart, bin, lines, cascades, shifts, points            |
 | `src/render.c`  | the screen: machine, belt, bin, status column, panels, sprites, text        |
-| `src/sound.c`   | sound chip: music and effects                                               |
+| `src/sound.c`   | sound chip: the songs (copied from their bank) and the effects              |
 | `src/save.c`    | the high score list in the cartridge RAM                                    |
 
 Notes on the Game Boy and SDCC:
 
 - All tiles are loaded at `$8000`, where background and sprites share them.
+- The code fills both halves of the first 32 KB, so the songs lie in the banks 2 and 3. Switching one in
+  replaces `$4000-$7fff`, code included: the copy routine is `NONBANKED` and `_HOME` is linked first
+  (`-Wl-b_HOME=0x200 -Wl-b_CODE=0x400`), so it lies below `$4000`, and the interrupts are off while it runs.
 - Writes to the background map go into a queue that the vertical blank interrupt writes out (in assembler,
   only while the blank lasts): during the display each single write would have to wait for the next
   horizontal blank, which cost up to 150 display lines when the belt moved.
@@ -129,7 +141,7 @@ it where it fits best, takes screenshots and reports the speed (ticks per frame)
 
 `docs/` is the page on GitHub Pages: the ROM runs in `docs/gb.js`, a small Game Boy emulator in JavaScript
 (from the Polonaise Game Boy project), and `docs/play.js` connects it to the page. The high score list is kept
-in the browser's localStorage.
+in the browser's localStorage. `docs/fx.js` adds the motions (the title letters, sections coming into view).
 
 ## Font
 

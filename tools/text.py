@@ -3,13 +3,14 @@
 text.py - the texts of Tilomat in German and English, for a screen of 20 characters
 (18 inside a panel, 7 in the status column next to the playfield).
 
-Each text becomes a string of tile numbers: {} is a number filled in by the game ($FE),
+The song names come from tools/songs.json. Each text becomes a string of tile numbers: {} is a number filled in by the game ($FE),
 a line break is $FD, the end $FF.
 
 Output: gen/text.c, gen/text.h
 
 Usage: tools/text.py <gen dir>
 """
+import json
 import os
 import re
 import sys
@@ -51,7 +52,8 @@ TEXTS = {
              '(AUCH SCHRÄG)\n'
              'VERSCHWINDEN.\n'
              'KEINE FLIESE\n'
-             'FALLEN LASSEN!',
+             'FALLEN LASSEN!\n'
+             'SELECT: MUSIK',
              '<>: MOVE THE CART\n'
              'A: DROP A TILE\n'
              'B/UP: TOSS IT BACK\n'
@@ -62,7 +64,8 @@ TEXTS = {
              'VANISH FROM\n'
              'THE BIN.\n'
              'DON\'T LET ANY\n'
-             'TILE FALL!'),
+             'TILE FALL!\n'
+             'SELECT: MUSIC'),
     'START_HINT': ('A: LOS GEHT\'S', 'A: GO!'),
 
     'DONE_TITLE': ('SCHICHT {} FERTIG', 'SHIFT {} DONE!'),
@@ -81,6 +84,9 @@ TEXTS = {
     'PAUSE_RESUME': ('START: WEITER', 'START: CONTINUE'),
     'PAUSE_QUIT': ('SELECT: ENDE', 'SELECT: QUIT'),
 
+    'MUSIC_TITLE': ('MUSIK', 'MUSIC'),
+    'MUSIC_HELP': ('A: FERTIG', 'A: DONE'),
+
     'TITLE_TAGLINE': ('DER FLIESEN-\nAUTOMAT', 'THE TILE\nMACHINE'),
     'TITLE_SCORES': ('BESTENLISTE', 'HIGH SCORES'),
     'TITLE_NOSCORES': ('NOCH KEINE PUNKTE\nAN DIE ARBEIT!', 'NO SCORES YET\nGET TO WORK!'),
@@ -96,6 +102,11 @@ TEXTS = {
     'ENTRY_HELP': ('KREUZ: BUCHSTABE\nA: WEITER  B: ZURÜCK\nSTART: SPEICHERN',
                    'D-PAD: LETTER\nA: NEXT  B: BACK\nSTART: SAVE'),
 }
+
+# the names of the songs (tools/songs.json), in both languages: SONG_0 + n
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'songs.json')) as f:
+    for n, song in enumerate(json.load(f)):
+        TEXTS['SONG_%d' % n] = (song['name'], song['name'])
 
 consts = {}
 with open(os.path.join(OUT, 'gfx.h')) as f:

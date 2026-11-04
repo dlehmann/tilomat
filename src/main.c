@@ -140,7 +140,7 @@ static void intro_panel(void)
     uint8_t y = 4, h;
 
     if (g.shift == 1)
-        h = 17;
+        h = 18;
     else
         h = 6 + (g.goal == GOAL_KIND ? 1 : 0) + (g.new_kind ? (g.new_kind == JOKER ? 4 : 2) : 0);
     panel_open(h);
@@ -247,6 +247,36 @@ static uint8_t pause(void)
     return 0;
 }
 
+/* the music menu: up and down play the songs, A (or any other button) closes it */
+static void music_menu(void)
+{
+    uint8_t i, n = music_song;
+
+    panel_open(SONGS + 6);
+    panel_line(1, MUSIC_TITLE, 0);
+    for (i = 0; i < SONGS; i++)
+        print(1, 3, 3 + i, SONG_0 + i, 0);
+    panel_line(SONGS + 4, MUSIC_HELP, 0);
+    vset(1, 1, 3 + n, CH('>'));
+    panel_show();
+    for (;;) {
+        frame();
+        if (pressed & (J_A | J_B | J_START | J_SELECT))
+            break;
+        if (pressed & (J_UP | J_DOWN)) {
+            vset(1, 1, 3 + n, T_SPACE);
+            if (pressed & J_UP)
+                n = n ? n - 1 : SONGS - 1;
+            else
+                n = n + 1 == SONGS ? 0 : n + 1;
+            vset(1, 1, 3 + n, CH('>'));
+            music_select(n);
+        }
+    }
+    save_store();
+    phase_panel();
+}
+
 /* one game tick with its sounds, panels and effects */
 static void tick(const Input *in)
 {
@@ -281,6 +311,11 @@ static void play(void)
         if ((pressed & J_START) && g.phase <= PHASE_PLAY) {
             if (pause())
                 break;
+            last_vbl = vbl_count;
+            continue;
+        }
+        if ((pressed & J_SELECT) && g.phase <= PHASE_PLAY) {
+            music_menu();
             last_vbl = vbl_count;
             continue;
         }

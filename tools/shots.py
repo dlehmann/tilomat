@@ -29,14 +29,14 @@ PAL = {(255, 255, 255): (0xf2, 0xed, 0xe1), (153, 153, 153): (0xb9, 0xb2, 0xa2),
        (85, 85, 85): (0x6b, 0x65, 0x58), (0, 0, 0): (0x23, 0x21, 0x1d)}
 
 # the good player: name -> frame
-GOOD = {'help': 20, 'play': 2100, 'done': 2850, 'intro': 49860, 'play2': 51000, 'play3': 64800}
-GIF = (50400, 51000)
+GOOD = {'help': 20, 'play': 2100, 'done': 2850, 'intro': 24390, 'play2': 45000, 'play3': 36000}
+GIF = (20400, 21000)
 # the sloppy player (700 of 1000 decisions wrong)
 BAD = {'gameover': 2300}
 # the strip for the README
-STRIP = ('title-en', 'help', 'play2', 'done')
+STRIP = ('title-en', 'help', 'play2', 'music')
 GAP = 12
-TAIL = 'wait:30,shot:entry,press:up,wait:4,press:up,wait:30,press:start,wait:60,shot:title-record,wait:400,shot:scores'
+TAIL = 'wait:30,shot:entry,press:up,wait:4,press:up,wait:30,press:start,wait:60,shot:scores,wait:400,shot:title-record'
 
 
 def tint(im):
@@ -61,6 +61,17 @@ def titles():
     p.button('select', 2)
     p.tick(40, True)
     save(p.screen.image, 'title-en')
+    p.stop(save=False)
+
+
+def music():
+    """The music menu, in English, with the third song chosen."""
+    p = PyBoy(ROM, window='null')
+    p.tick(150, True)
+    for key, wait in (('select', 40), ('start', 60), ('a', 60), ('select', 20), ('down', 10), ('down', 30)):
+        p.button(key, 2)
+        p.tick(wait, True)
+    save(p.screen.image, 'music')
     p.stop(save=False)
 
 
@@ -101,6 +112,7 @@ def strip():
 
 os.makedirs(OUT, exist_ok=True)
 titles()
+music()
 autoplay(max(GOOD.values()) + 1, 0, GOOD, GIF)
 autoplay(12000, 700, BAD, tail=TAIL)
 strip()
