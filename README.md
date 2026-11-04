@@ -74,7 +74,8 @@ for the small screen and four shades of gray:
 
 Ten songs of its own come with the game, each with its own key, tempo, chords, bass line and drums: Conveyor
 Boogie (the default), Night Shift, Turbo Beat, Puzzle Pop, Red Line, Sun Deck, Crystal, Final Sprint, Way Home
-and Tile Shuffle. SELECT in the game opens the music menu: up and down play the songs, A closes it, and the
+and Tile Shuffle. A game starts with the song chosen, and every new shift plays the next one (after the last,
+the first again). SELECT in the game opens the music menu: up and down play the songs, A closes it, and the
 choice is saved. The tune plays on channel 1, a second voice (a third below, an echo, an octave or an
 arpeggio) on channel 2, the bass on the wave channel, kick, clap and hi-hats on the noise channel. The effects
 take channel 1 from the tune while they play.

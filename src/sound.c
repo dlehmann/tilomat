@@ -87,7 +87,7 @@ static void pulse(volatile uint8_t *reg, uint8_t n, uint8_t duty, uint8_t env)
 }
 
 /* the song playing, copied from its ROM bank: lead, harm, bass and drum of `steps` 16ths each */
-uint8_t music_song;
+uint8_t music_song, song_choice;
 static uint8_t loaded = 0xff;
 static uint8_t song_buf[4 * SONG_MAX_STEPS];
 static uint16_t steps, step_fp;

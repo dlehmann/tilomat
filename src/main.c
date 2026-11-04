@@ -3,8 +3,9 @@
  *
  * One game tick per frame (the Game Boy shows 59.7 frames per second, the game counts 60).
  * Controls: left/right move the cart (repeating while held), A drops a tile, B or up tosses
- * it back, down runs the belt faster, START pauses (SELECT in the pause ends the game),
- * SELECT on the title screen switches between German and English.
+ * it back, down runs the belt faster, START pauses (SELECT in the pause ends the game), SELECT
+ * in the game opens the music menu, SELECT on the title screen switches between German and
+ * English. A game starts with the song chosen, every new shift plays the next one.
  */
 #include <gb/gb.h>
 #include <gb/hardware.h>
@@ -103,6 +104,7 @@ static void title(void)
     render_clear();
     draw_logo();
     title_page(page);
+    music_song = song_choice;
     music_start();
     for (;;) {
         frame();
@@ -271,6 +273,7 @@ static void music_menu(void)
                 n = n + 1 == SONGS ? 0 : n + 1;
             vset(1, 1, 3 + n, CH('>'));
             music_select(n);
+            song_choice = n;
         }
     }
     save_store();
@@ -284,8 +287,11 @@ static void tick(const Input *in)
 
     game_tick(in);
     sounds();
-    if (g.shift != shift)
+    if (g.shift != shift) {
         render_field();
+        /* every shift its own song, after the last the first again */
+        music_select(music_song + 1 == SONGS ? 0 : music_song + 1);
+    }
     if (g.phase != phase || g.shift != shift)
         phase_panel();
     render_events();

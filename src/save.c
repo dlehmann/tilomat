@@ -51,7 +51,7 @@ void save_load(void)
     }
     /* the song chosen is kept above the language bit */
     lang = buf.lang & 1;
-    music_song = (buf.lang >> 1) % SONGS;
+    song_choice = (buf.lang >> 1) % SONGS;
     memcpy(last_name, buf.last_name, NAME_LEN);
     memcpy(scores, buf.scores, sizeof(scores));
 }
@@ -59,7 +59,7 @@ void save_load(void)
 void save_store(void)
 {
     buf.magic = MAGIC;
-    buf.lang = lang | music_song << 1;
+    buf.lang = lang | song_choice << 1;
     memcpy(buf.last_name, last_name, NAME_LEN);
     memcpy(buf.scores, scores, sizeof(scores));
     buf.sum = checksum(&buf);

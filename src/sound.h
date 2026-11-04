@@ -14,8 +14,9 @@ void music_resume(void);
 void music_stop(void);
 void music_select(uint8_t n);
 
-/* the song chosen (0..SONGS-1) */
-extern uint8_t music_song;
+/* the song playing (0..SONGS-1), and the one chosen in the menu (saved): a game starts with it,
+   every new shift plays the next one */
+extern uint8_t music_song, song_choice;
 uint8_t music_playing(void);
 void sfx_play(uint8_t n);
 
