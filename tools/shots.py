@@ -29,10 +29,10 @@ PAL = {(255, 255, 255): (0xf2, 0xed, 0xe1), (153, 153, 153): (0xb9, 0xb2, 0xa2),
        (85, 85, 85): (0x6b, 0x65, 0x58), (0, 0, 0): (0x23, 0x21, 0x1d)}
 
 # the good player: name -> frame
-GOOD = {'help': 20, 'play': 2100, 'done': 2600, 'intro': 58130, 'play2': 64000, 'play3': 68000}
-GIF = (54400, 55000)
-# the sloppy player (700 of 1000 decisions wrong)
-BAD = {'gameover': 2300}
+GOOD = {'help': 20, 'play': 2100, 'done': 2700, 'intro': 28120, 'play2': 34000, 'play3': 40000}
+GIF = (24000, 24600)
+# the sloppy player (800 of 1000 decisions wrong)
+BAD = {'gameover': 5990}
 # the strip for the README
 STRIP = ('title-en', 'help', 'play2', 'music')
 GAP = 12
@@ -114,5 +114,5 @@ os.makedirs(OUT, exist_ok=True)
 titles()
 music()
 autoplay(max(GOOD.values()) + 1, 0, GOOD, GIF)
-autoplay(12000, 700, BAD, tail=TAIL)
+autoplay(12000, 800, BAD, tail=TAIL)
 strip()

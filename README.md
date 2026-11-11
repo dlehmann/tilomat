@@ -7,7 +7,7 @@ for emulators and flash cartridges.
 
 **Play it in the browser:** <https://dlehmann.github.io/tilomat/>
 
-**The ROM: `tilomat.gb`** (also `build/tilomat.gb`) – 64 KB, MBC1 with 8 KB battery-backed RAM for the high
+**The ROM: `tilomat.gb`** (also `build/tilomat.gb`) – 32 KB, MBC1 with 8 KB battery-backed RAM for the high
 score list, the language and the song chosen.
 
 ## How to play
@@ -92,27 +92,27 @@ make
 
 `make` generates the files in `gen/` from `tools/gfx.py` (all tiles: font, tile kinds, belt, bin, logo,
 sprites; a preview in `build/tiles.png`), `tools/text.py` (texts in German and English) and `tools/music.py`
-(the songs from `tools/songs.json` into the ROM banks 2 and 3, the effects), compiles `src/` and writes
+(the songs from `tools/songs.json` as one-bar patterns, the effects), compiles `src/` and writes
 `build/tilomat.gb` and `tilomat.gb`.
 
 `tools/songs.json` holds the ten songs, written by `tools/compose.py` (`python3 tools/compose.py`): per song
 32 bars in the form A A B A, a chord progression, a bass and a drum pattern, and a tune that walks over the
-chord tones in a two bar rhythm. 2 KB per song, five to a ROM bank; the one playing is copied into the RAM.
+chord tones in a two bar rhythm.
 
 | File            | Contents                                                                    |
 |-----------------|-----------------------------------------------------------------------------|
 | `src/main.c`    | flow: title screen, game loop, pause, panels, name entry                    |
 | `src/game.c`    | the game logic: belt, cart, bin, lines, cascades, shifts, points            |
 | `src/render.c`  | the screen: machine, belt, bin, status column, panels, sprites, text        |
-| `src/sound.c`   | sound chip: the songs (copied from their bank) and the effects              |
+| `src/sound.c`   | sound chip: the songs (played from their bar patterns) and the effects      |
 | `src/save.c`    | the high score list in the cartridge RAM                                    |
 
 Notes on the Game Boy and SDCC:
 
 - All tiles are loaded at `$8000`, where background and sprites share them.
-- The code fills both halves of the first 32 KB, so the songs lie in the banks 2 and 3. Switching one in
-  replaces `$4000-$7fff`, code included: the copy routine is `NONBANKED` and `_HOME` is linked first
-  (`-Wl-b_HOME=0x200 -Wl-b_CODE=0x400`), so it lies below `$4000`, and the interrupts are off while it runs.
+- The songs are kept in one-bar patterns: a table of 16-step bars per channel, shared by all songs, and per
+  song the bar of each channel in turn. They repeat their bars a lot, so the ten songs take about 6 KB
+  instead of 20 KB, and the game fits into 32 KB without bank switching.
 - Writes to the background map go into a queue that the vertical blank interrupt writes out (in assembler,
   only while the blank lasts): during the display each single write would have to wait for the next
   horizontal blank, which cost up to 150 display lines when the belt moved.

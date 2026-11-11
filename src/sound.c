@@ -1,9 +1,9 @@
 /*
  * sound.c - music and sound effects on the Game Boy's sound chip.
  *
- * The music is ten songs (gen/songs*.c, in the ROM banks from 2 on); the one playing is copied
- * into RAM. A song is one event per 16th note, every step_fp / 256 ticks: on each channel a
- * note starts, ends (1) or holds (0). Channel 1 plays the melody, channel 2 a second
+ * The music is ten songs (gen/music.c), stored in one-bar patterns per channel. A song is one
+ * event per 16th note, every step_fp / 256 ticks: on each channel a note starts, ends (1) or
+ * holds (0). Channel 1 plays the melody, channel 2 a second
  * voice below it, channel 3 the bass, channel 4 the drums. The effects are small programs for
  * channel 1, the melody pauses while one plays; noise in an effect borrows channel 4.
  */
@@ -13,7 +13,7 @@
 #include "music.h"
 
 static uint8_t playing;
-static uint16_t pos, step_acc;
+static uint16_t step_acc;
 
 static const uint8_t *sfx;
 static uint8_t sfx_wait, sfx_vol, sfx_duty, sfx_noise, sfx_prio_now;
@@ -86,47 +86,27 @@ static void pulse(volatile uint8_t *reg, uint8_t n, uint8_t duty, uint8_t env)
     }
 }
 
-/* the song playing, copied from its ROM bank: lead, harm, bass and drum of `steps` 16ths each */
+/* the song playing, and in it the patterns of the bar playing */
 uint8_t music_song, song_choice;
-static uint8_t loaded = 0xff;
-static uint8_t song_buf[4 * SONG_MAX_STEPS];
-static uint16_t steps, step_fp;
-static uint8_t lead_duty, lead_env, harm_duty, harm_env;
-
-/* in bank 0 (and with the interrupts off), as the bank switched in replaces $4000-$7fff */
-static void copy_banked(uint8_t *dst, const uint8_t *src, uint16_t n, uint8_t bank) NONBANKED
-{
-    uint8_t save = _current_bank;
-
-    disable_interrupts();
-    SWITCH_ROM(bank);
-    while (n--)
-        *dst++ = *src++;
-    SWITCH_ROM(save);
-    enable_interrupts();
-}
-
-static void load(void)
-{
-    const SongInfo *s = &songs[music_song];
-
-    if (loaded == music_song)
-        return;
-    loaded = music_song;
-    steps = s->steps;
-    step_fp = s->step_fp;
-    lead_duty = s->lead_duty;
-    lead_env = s->lead_env;
-    harm_duty = s->harm_duty;
-    harm_env = s->harm_env;
-    copy_banked(song_buf, s->data, 4 * steps, s->bank);
-}
+static const SongInfo *song;
+static uint8_t bar, step;
+static const uint8_t *row_lead, *row_harm, *row_bass, *row_drum;
 
 static void music_event(void)
 {
-    const uint8_t *p = song_buf + pos;
-    uint8_t l = p[0], v = p[steps], b = p[2 * steps];
+    uint8_t l, v, b;
 
+    if (step == 0) {
+        const uint8_t *o = song->order + bar;
+        uint8_t n = song->bars;
+        row_lead = pat_lead + ((uint16_t)o[0] << 4);
+        row_harm = pat_harm + ((uint16_t)o[n] << 4);
+        row_bass = pat_bass + ((uint16_t)o[2 * n] << 4);
+        row_drum = pat_drum + ((uint16_t)o[3 * n] << 4);
+    }
+    l = row_lead[step];
+    v = row_harm[step];
+    b = row_bass[step];
     if (b == 1) {
         NR32_REG = 0;
     } else if (b) {
@@ -139,25 +119,28 @@ static void music_event(void)
         NR34_REG = 0x80 | (x >> 8);
     }
     if (!sfx_noise)
-        drum(p[3 * steps]);
+        drum(row_drum[step]);
     if (l && !sfx) {
         NR10_REG = 0;
-        pulse(CH1, l, lead_duty, lead_env);
+        pulse(CH1, l, song->lead_duty, song->lead_env);
     }
     if (v)
-        pulse(CH2, v, harm_duty, harm_env);
-    if (++pos == steps)
-        pos = 0;
+        pulse(CH2, v, song->harm_duty, song->harm_env);
+    if (++step == 16) {
+        step = 0;
+        if (++bar == song->bars)
+            bar = 0;
+    }
 }
 
 void music_start(void)
 {
     if (playing)
         return;
-    load();
+    song = &songs[music_song];
     playing = 1;
-    pos = 0;
-    step_acc = step_fp;
+    bar = step = 0;
+    step_acc = song->step_fp;
 }
 
 /* continues where the music was stopped (after the pause) */
@@ -305,8 +288,8 @@ void sound_tick(void)
     if (!playing)
         return;
     step_acc += 256;
-    if (step_acc >= step_fp) {
-        step_acc -= step_fp;
+    if (step_acc >= song->step_fp) {
+        step_acc -= song->step_fp;
         music_event();
     }
 }
